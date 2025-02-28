@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Engine</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="light">
+  <header>
+    <div class="header-content">
+      <div class="header-buttons">
+        <button>Кнопка 1</button>
+        <button>Кнопка 2</button>
+        <button>Кнопка 3</button>
+      </div>
+      <h1 class="header-title">Pixel engine</h1>
+      <button id="theme-toggle" class="theme-button">Сменить тему</button>
+    </div>
+  </header>
+
+  <div class="intro">
+    <h2 class="intro-title">Pixel Engine</h2>
+    <p class="intro-text1">Создай свой Pixel Art</p>
+    <p class="intro-text2">создавайте изображения и видео за секунды с помощью текстовых описаний</p>
+  </div>
+
+  <main class="editor-area">
+    <div class="pixel-editor">
+      <div class="tools">
+        <input type="color" id="colorPicker" value="#ff0000">
+        <button class="tool-btn active" data-tool="brush">Кисть</button>
+        <button class="tool-btn" data-tool="eraser">Ластик</button>
+        <button class="tool-btn" data-tool="fill">Заливка</button>
+      </div>
+      <div class="canvas" id="canvas"></div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-content">
+      <p>Тел: 8(800) 535-35-35</p>
+      <p>Email: <a href="mailto:EditorByShastik@pixel.com">EditorByShastik@pixel.com</a></p>
+      <p>designed by Shastik</p>
+    </div>
+  </footer>
+
+  <script>
+    // Смена темы
+    document.addEventListener('DOMContentLoaded', function() {
+      const themeToggle = document.getElementById('theme-toggle');
+      const body = document.body;
+
+      const savedTheme = localStorage.getItem('theme');
+      body.setAttribute('data-theme', savedTheme || 'light');
+
+      themeToggle.addEventListener('click', function() {
+        const newTheme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        body.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+      });
+    });
+
+    // Пиксельный редактор
+    const canvas = document.getElementById('canvas');
+    const colorPicker = document.getElementById('colorPicker');
+    const toolButtons = document.querySelectorAll('.tool-btn');
+    let currentTool = 'brush';
+    let isMouseDown = false;
+
+    function createCanvas() {
+      for (let i = 0; i < 30 * 30; i++) {
+        const pixel = document.createElement('div');
+        pixel.className = 'pixel';
+        canvas.appendChild(pixel);
+      }
+    }
+
+    toolButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        toolButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTool = btn.dataset.tool;
+      });
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('pixel')) {
+        isMouseDown = true;
+        handlePixel(e.target);
+      }
+    });
+
+    canvas.addEventListener('mouseover', (e) => {
+      if (isMouseDown && e.target.classList.contains('pixel')) {
+        handlePixel(e.target);
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isMouseDown = false;
+    });
+
+    function handlePixel(pixel) {
+      switch(currentTool) {
+        case 'brush':
+          pixel.style.backgroundColor = colorPicker.value;
+          break;
+        case 'eraser':
+          pixel.style.backgroundColor = 'var(--pixel-bg)';
+          break;
+        case 'fill':
+          floodFill(pixel);
+          break;
+      }
+    }
+
+    function floodFill(startPixel) {
+      const targetColor = startPixel.style.backgroundColor;
+      const fillColor = colorPicker.value;
+      
+      if (targetColor === fillColor) return;
+
+      const pixels = Array.from(canvas.children);
+      const queue = [startPixel];
+      const visited = new Set();
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+        if (!visited.has(current) && current.style.backgroundColor === targetColor) {
+          current.style.backgroundColor = fillColor;
+          visited.add(current);
+          
+          const index = pixels.indexOf(current);
+          const x = index % 30;
+          const y = Math.floor(index / 30);
+
+          if (x > 0) queue.push(pixels[index - 1]);
+          if (x < 29) queue.push(pixels[index + 1]);
+          if (y > 0) queue.push(pixels[index - 30]);
+          if (y < 29) queue.push(pixels[index + 30]);
+        }
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', createCanvas);
+  </script>
+</body>
+</html>
